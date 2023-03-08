@@ -10,32 +10,36 @@ title: "Reading Texts into R"
 
 Traditionally, quantitative political analyses have used two-dimensional datasets. These datasets consist of rows (observations) and columns (variables) and come in a variety of file formats. Independent of file format, R can (usually) read the data through various packages.
 
-Under, we illustrate how to read a selection of file formats into R. The data are gathered from the `textreadr` package, and includes all three debates of the presidential debates between Romney and Obama in 2012. There are 4 variables in the data:
+Under, we illustrate how to read a selection of file formats into R. The data are gathered from the `quanteda` package, and includes presidential inaugural speeches from 1789. There are 6 variables in the data:
 
-| Variable | Description      |
-|:---------|:-----------------|
-| person   | The speaker      |
-| tot      | Turn of talk     |
-| time     | Debate number    |
-| role     | Role of speaker  |
-| dialogue | The words spoken |
+| Variable  | Description                                |
+|:----------|:-------------------------------------------|
+| doc_id    | Id of the document                         |
+| text      | Speech transcript                          |
+| Year      | Year of inaugural speech                   |
+| President | Surname of President holding the speech    |
+| FirstName | First name of President holding the speech |
+| Party     | Party of the President holding the speech  |
 
-We can load the data into R intitially by using the `data()` function:
+We can load the data into R intitially by using the `data()` function, change the object name (as it was annoyingly long), and `convert()` the corpus format to a `data.frame`:
 
 ```{r}
-#| label: load_cases_data
+#| label: load_inaug_data
 #| message: false
 #| warning: false
 library(tidyverse)
+library(quanteda)
 
-data(presidential_debates_2012, package = "textreadr")
+data(data_corpus_inaugural, package = "quanteda")
 
-pres_deb <- presidential_debates_2012 # just making a shorter name for the object
-rm(presidential_debates_2012)
+pres_inaug <- data_corpus_inaugural # just making a shorter name for the object
+rm(data_corpus_inaugural)
 
-pres_deb %>% 
-  mutate(dialogue = str_sub(dialogue, 1, 30)) %>% 
-  tail()
+pres_inaug <- pres_inaug %>% 
+  quanteda::convert(., to = "data.frame") %>% 
+  mutate(text = str_replace_all(text, "\\s{2}", " "))
+
+glimpse(pres_inaug)
 
 ```
 
@@ -48,7 +52,7 @@ As an example of storing data, I will store the `cases` data from `stortingscrap
 ```{r}
 #| label: save_rda
 #| eval: false
-save(pres_deb, file = "../data/pres_deb.rda")
+save(pres_inaug, file = "../data/pres_inaug.rda")
 
 ```
 
@@ -59,10 +63,10 @@ In order to load RData (`.rda`/`.rdata`), we use the `load()` function:
 ```{r}
 #| label: rda_load
 #| eval: false
-load("../data/pres_deb.rda")
+load("../data/pres_inaug.rda")
 ```
 
-A potentially confusing detail with these functions is that the file name (in our case "cases.rda") does not necessarily match the name of the object in the *Environment*. The objects will always keep its *Environment* name when loaded from an RData file.
+A potentially confusing detail with these functions is that the file name (in our case "pres_inaug.rda") does not necessarily match the name of the object in the *Environment*. The objects will always keep its *Environment* name when loaded from an RData file.
 
 ### Comma seperated value files (.csv)
 
@@ -74,7 +78,7 @@ Another common dataset file format is the *comma seperated value files* (`.csv`)
 
 library(readr)
 
-pres_deb <- read_csv("../data/pres_deb.csv", show_col_types = FALSE)
+pres_inaug <- read_csv("../data/pres_inaug.csv", show_col_types = FALSE)
 
 ```
 
@@ -88,7 +92,7 @@ Historically, social science data have often been distributed in file formats fr
 #| label: sav
 #| eval: false
 library(haven)
-cases <- read_sav("../data/pres_deb.sav")
+cases <- read_sav("../data/pres_inaug.sav")
 ```
 
 For Stata files (`.dta`), the syntax is the same, but now with the function `read_dta()`:
@@ -96,23 +100,22 @@ For Stata files (`.dta`), the syntax is the same, but now with the function `rea
 ```{r}
 #| label: dta_files
 #| eval: false
-pres_deb <- read_dta("../data/pres_deb.dta")
+pres_inaug <- read_dta("../data/pres_inaug.dta")
 ```
 
 Note that both Stata and SPSS files often come with value labels that can work as a coding book. See `?haven::labelled` for more details on this.
 
 ## Raw textfiles (.txt)
 
-Raw textfiles is also a common format for working with text data. The format does not have any overhead, which makes the files relatively small in size and they are flexible to work with. A common way to structure `.txt` files is to have each file be a document with a file name that indicates which document we are looking at. For example, we can store the titles in our `pres_deb` dataset into text files with their `id` as file names (here only with the first 10 rows of the data):
+Raw textfiles is also a common format for working with text data. The format does not have any overhead, which makes the files relatively small in size and they are flexible to work with. A common way to structure `.txt` files is to have each file be a document with a file name that indicates which document we are looking at. For example, we can store the titles in our `pres_inaug` dataset into text files with their `id` as file names (here only with the first 10 rows of the data):
 
 ```{r}
 #| label: save_txt
 #| eval: true
 #| output: false
-lapply(1:10, function(x) writeLines(pres_deb$dialogue[x], 
-                                    paste0("../data/dialogue_txt/", 
-                                           pres_deb$tot[x], 
-                                           pres_deb$person[x], 
+lapply(1:10, function(x) writeLines(pres_inaug$text[x], 
+                                    paste0("../data/inaug_txt/", 
+                                           pres_inaug$doc_id[x],
                                            ".txt")))
 
 ```
@@ -122,10 +125,10 @@ We can now check if the files are stored as expected:
 ```{r}
 #| label: list_files
 
-dialogue_files <- list.files("../data/dialogue_txt", 
+inaug_files <- list.files("../data/inaug_txt", 
                              full.names = TRUE, 
                              pattern = ".txt")
-dialogue_files
+inaug_files
 
 ```
 
@@ -134,28 +137,28 @@ If we want to read these files back into R, we can use the `readLines()` functio
 ```{r}
 #| label: read_lines
 
-dialogues <- lapply(dialogue_files, readLines)
+inaugs <- lapply(inaug_files, readLines)
 
-class(dialogues) # lapply always returns a list
+class(inaugs) # lapply always returns a list
 
-dialogues[[1]] # This is the first title
+str_sub(inaugs[[1]], 1, 65) # This is the first inaugural speech
 
 ```
 
-We can now put the texts into a data frame by using `unlist()` on the `dialogues` object:
+We can now put the texts into a data frame by using `unlist()` on the `inaugs` object:
 
 ```{r}
 #| label: txt_dataframe
 
-dialogue_txt <- data.frame(id = dialogue_files, 
-                        text = unlist(dialogues))
+inaug_txt <- data.frame(id = inaug_files, 
+                        text = unlist(inaugs))
 
 # Trying to (sort of) reengineer the original data
-dialogue_txt %>% 
-  mutate(person = str_extract(id, "[A-Z]+"),
-         tot = str_extract(id, "([0-9]+\\.*)+"),
+inaug_txt %>% 
+  mutate(id = str_extract(inaug_files, "[0-9]+\\-[A-Za-z]+"),
          text = str_sub(text, 1, 50)) %>% 
-  select(person, tot, text)
+  select(id, text) %>% 
+  glimpse()
 ```
 
 We can also work directly with the list by giving the elements within the list names:
@@ -163,8 +166,8 @@ We can also work directly with the list by giving the elements within the list n
 
 ```{r}
 #| label: txt_list_names
-names(dialogues) <- str_extract(dialogue_files, "([0-9]+\\.*)+[A-Z]+")
-names(dialogues)
+names(inaugs) <- str_extract(inaug_files, "[0-9]+\\-[A-Za-z]+")
+names(inaugs)
 
 ```
 
@@ -174,19 +177,17 @@ names(dialogues)
 
 ```{r}
 #| label: txt_dataframe2
-dialogue_txt <- data.frame(text = unlist(dialogues),
-                           id = names(dialogues))
+inaug_txt <- data.frame(text = unlist(inaugs),
+                        id = names(inaugs))
 
-glimpse(dialogue_txt)
+glimpse(inaug_txt)
 ```
 
 It will often be a good idea to work with the data, especially in cases of large and many texts, in list format before converting to a data frame. List objects use slightly less resources in terms of RAM, but are also a bit more flexible to work with through parallelization functions such as `mclapply()`.^[Windows users will not me able to use this function because it relies on the [forking method](https://www.r-bloggers.com/2019/06/parallel-r-socket-or-fork/)]. In our small example, the difference in object size is small, but still there:
 
 ```{r}
 #| label: list_vs_df_objsize
-
-
-object.size(dialogue_txt) - object.size(dialogues)
+object.size(inaug_txt) - object.size(inaugs)
 ```
 
 ## Textfiles with overhead
