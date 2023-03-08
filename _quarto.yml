@@ -1,0 +1,64 @@
+project:
+  type: website
+  output-dir: docs
+
+website:
+  title: |
+    ![](/pics/uio-logo-white.png){width=150} | STV4030A
+  favicon: /pics/favicon.png
+  page-navigation: true
+  page-footer:
+    background: "#B60000"
+    center: |
+      ![](/pics/uio-logo-white.png){width=150}
+  navbar: 
+    background: "#B60000"
+    foreground: "#ffffff"
+    search: true
+  sidebar:
+    title: "STV4030A"
+    style: floating
+    type: dark
+    alignment: right
+    background: "#000000"
+    foreground: "#ffffff"
+    contents:
+      - href: index.qmd
+        text: "Home"
+      - text: "----"
+      - section: "Basic R"
+        contents: 
+          - basics_refresh/basic_R.qmd
+          - basics_refresh/writing_quarto.qmd
+          - basics_refresh/data_wrangling.qmd
+          - basics_refresh/data_viz.qmd
+      - text: "----"
+      - section: "Data gathering"
+        contents: 
+          - data_gather/webscraping.qmd
+          - data_gather/apis.qmd
+      - text: "----"
+      - section: "Text data"
+        contents:
+          - text_data/read_texts.qmd
+          - text_data/extracting_data_from_texts.qmd
+      - text: "----"
+      - section: "Spatial data"
+        contents: 
+        - spatial_data/spatial_data.qmd
+    tools:
+      - icon: github
+        menu:
+          - text: "Kildekode"
+            url:  https://github.uio.no/oyvinsti/STV4030A
+          - text: "Meld fra om feil"
+            url:  https://github.uio.no/oyvinsti/STV4030A/issues
+
+format:
+  html:
+    theme: 
+      light: flatly
+      dark: darkly
+    css: styles.css
+    toc: true
+    mainfont: arial

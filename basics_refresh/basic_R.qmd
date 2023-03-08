@@ -1,0 +1,128 @@
+---
+title: "The Basics of R"
+---
+
+## Installing R and RStudio
+
+To follow along in all the tutorials on this website, you will need the following software installed in your computer.
+
+1.  A recent installation of R. [You can get the latest version of R here](https://cloud.r-project.org/).
+
+2.  The latest version of RStudio. [You can get the latest version of RStudio here](https://posit.co/download/rstudio-desktop/).
+
+If it has been a while since you last updated R and RStudio, it is a good idea to update both programs before proceeding.
+
+Alternatively, [you may use RStudio in your browser using the University of Oslo RStudio Workbench](https://www.uio.no/tjenester/it/utdanning/rstudioworkb/). For the RStudio Workbench you will not need to install anything locally on your computer.
+
+<iframe src="https://uio.cloud.panopto.eu/Panopto/Pages/Embed.aspx?id=8e74a3b8-5775-498a-84be-afb900c3e765&autoplay=false&offerviewer=false&showtitle=true&showbrand=true&captions=false&interactivity=all" height="405" width="720" style="border: 1px solid #464646;" allowfullscreen allow="autoplay"></iframe>
+
+
+## Repetition of basic R programming
+
+### Working in R-Scripts
+
+### Loading Data
+
+```{r}
+
+# devtools::install_github("vdeminstitute/vdemdata")
+load("../data/vdem.rda")
+load("../data/vdem_codebook.rda")
+
+```
+
+
+
+### Important operators
+
+### Data types
+
+### Subsetting vectors, lists, and data frames
+
+### Calling functions
+
+### Packages
+
+## Defining your own functions
+
+**Motivation:** Sometimes, there is no function available in R that does exactly what we want to do. For instance, there is no built-in function in that gives you the modal value of a variable. This is not necessarily a big problem. We can find the modal value by combining other functions. Let's say we want to fine the modal value on the variable called "v2x_regime" in the VDem data frame we loaded above. 
+
+We could use table, to get the frequency table for the variable: 
+
+```{r}
+table(vdem$v2x_regime)
+
+
+
+
+```
+From the frequency table, we quickly see that 0 is the most common value on this variable. However, this doesn't give us the modal value as a single number, which is typically what we want if we want to use the modal value for something else later. 
+
+One way to retrieve the model value would be to first create a frequency table using table(), then sort this table using sort(), then extract the names of the sorted table using names(), and finally extract the first element of this table (which will now be the most frequent value on our variable) using square brackets [] and the number 1 for the first element. 
+
+```{r}
+freq_table  <- table(vdem$v2x_regime)  ## This produces a frequency table for the variable vdem$v2x_regime
+freq_table_sorted  <- sort(freq_table, decreasing = TRUE) ## This sorts the frequency table so that the most frequent value is in the first row of the table
+sorted_names <- names(freq_table_sorted) ## this extract the different values in the sorted order (we get rid of the frequencies which we don't need anymore)
+modal_value <- sorted_names[1] ## This extract the first element, which is the modal value for vdem$v2x_regime
+print(modal_value) ## we can print it out, to the modal value ("0") to be printed out in the console 
+```
+If we only wanted the modal value of one variable, this approach would be fine. But what if also want the mode of many other variables in the dataset? We could copy paste the above code and adapt it to get the modal value for many different variables, but this is not a good approach for a big project such as an MA thesis. Why not? First, It will be cumbersome to copy and edit multiple lines of code repeatedly. Second, this approach is error prone: as we copy-paste and edit many lines of code, we are very likely to make mistakes and those mistakes will be difficult to spot. Third, the copy-pasting and editing approach will make our R-scripts very long and hard to read. 
+
+A better approach is therefore to define our own function.
+
+**Concept and workflow:** We define our own functions in R using function(). We will need to specify one or more arguments that the function will take, define what the function will do, and what the function should return (i.e. what is the final output we are interested in from this function). Defining a function will look this:  
+
+```{r}
+#| eval: false
+
+my_function <- function(x){   ## x is the argument this function takes
+  y <- do_something(x)   ## In this example, we first apply the (imaginary) function  do_something to x and assign it to y
+  z <- do_something_else(y) ## then we apply the (still imaginary) function do_something_else() to y and assign it to z
+  return(z) ## Finally, we tell R that what this function should return (i.e. produce) is what we assigned to z
+}
+
+```
+If were to apply this function to a variable called dataset$some_variable, we would simply run: 
+
+```{r}
+#| eval: false
+my_function(x = dataset$some_variable)
+```
+Let's apply this idea to our modal value example. We can generalize the code we wrote before into a user-defined function like this: 
+
+
+```{r}
+modal_value <- function(x){
+  freq_table  <- table(x)  ## Notice that we no longer write a specific variable name here. We write x which as an argument of the function. Later we can apply the function to different variable by specifying x when we call the function. 
+  freq_table_sorted  <- sort(freq_table, decreasing = TRUE) 
+  sorted_names <- names(freq_table_sorted) 
+  modal_value <- sorted_names[1] 
+  return(modal_value) 
+}
+```
+Running the above code chunk will create a function called modal_value and we can see that it takes the argument x. We can now use this function to get the modal value of vdem$v2x_regime: 
+```{r}
+modal_value(vdem$v2x_regime)
+```
+If we now 
+
+
+
+### More complicated functions
+
+#### Multiple arguments
+
+
+#### Conditionals
+
+
+
+
+## Iteration
+
+### For-loops
+
+### The apply-family of functions
+
+### purrr

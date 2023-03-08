@@ -1,0 +1,254 @@
+---
+title: "Reading Texts into R"
+---
+
+<!-- I denne delen av arbeidsboken vil vi gå gjennom noen eksempler på hvordan vi kan laste inn tekstdata i R. -->
+
+<!-- Tekstdata kan komme i uendelig mange forskjellige formater, og det er umulig å gå gjennom alle. Vi har likevel noen typer data som er mer vanlig innenfor statsvitenskap enn andre. Under vil vi gå gjennom 1) lasting av ulike to-dimensjonale datasett (.rda/.Rdata, .csv, .sav og .dta), 2) rå tekstfiler (.txt), 3) tekstfiler med overhead (.pdf og .docx). -->
+
+## Two-dimensional datasets
+
+Traditionally, quantitative political analyses have used two-dimensional datasets. These datasets consist of rows (observations) and columns (variables) and come in a variety of file formats. Independent of file format, R can (usually) read the data through various packages.
+
+Under, we illustrate how to read a selection of file formats into R. The data are gathered from the `textreadr` package, and includes all three debates of the presidential debates between Romney and Obama in 2012. There are 4 variables in the data:
+
+| Variable | Description      |
+|:---------|:-----------------|
+| person   | The speaker      |
+| tot      | Turn of talk     |
+| time     | Debate number    |
+| role     | Role of speaker  |
+| dialogue | The words spoken |
+
+We can load the data into R intitially by using the `data()` function:
+
+```{r}
+#| label: load_cases_data
+#| message: false
+#| warning: false
+library(tidyverse)
+
+data(presidential_debates_2012, package = "textreadr")
+
+pres_deb <- presidential_debates_2012 # just making a shorter name for the object
+rm(presidential_debates_2012)
+
+pres_deb %>% 
+  mutate(dialogue = str_sub(dialogue, 1, 30)) %>% 
+  tail()
+
+```
+
+### R (.rda/.Rdata) files
+
+R does have its own file format; objects in R can be saved and loaded from `.rda` or `.rdata` files (`.Rds` also exist, but is rare). These two formats are the exact same type of files. `.rda` is just an abbreviation for `.rdata`. These locally stored files are compressed versions of the objects we store in our *Environment*. As the compression save harddisk space and the format obviously works well with R in general, this format is a very useful format to work with when using R. This is especially true when we are working with large text data.
+
+As an example of storing data, I will store the `cases` data from `stortingscrape` using the `save()` function:
+
+```{r}
+#| label: save_rda
+#| eval: false
+save(pres_deb, file = "../data/pres_deb.rda")
+
+```
+
+If we have several objects in our *Environment* that we want to store locally, we can use the `save.image()` function instead.
+
+In order to load RData (`.rda`/`.rdata`), we use the `load()` function:
+
+```{r}
+#| label: rda_load
+#| eval: false
+load("../data/pres_deb.rda")
+```
+
+A potentially confusing detail with these functions is that the file name (in our case "cases.rda") does not necessarily match the name of the object in the *Environment*. The objects will always keep its *Environment* name when loaded from an RData file.
+
+### Comma seperated value files (.csv)
+
+Another common dataset file format is the *comma seperated value files* (`.csv`). We can easily read these files into R with the `read.csv()` function, or the `tidyverse` equivalent `read_csv()`.^[The `tidyverse` version will be somewhat faster for large files.] 
+
+```{r}
+#| label: csv_read
+#| eval: false
+
+library(readr)
+
+pres_deb <- read_csv("../data/pres_deb.csv", show_col_types = FALSE)
+
+```
+
+The `show_col_types` argument above removes a message on how the data was loaded. It can be useful to see this, but it also clutters the console quite a bit.
+
+### SPSS (.sav) and Stata (.dta) files
+
+Historically, social science data have often been distributed in file formats from other statistical packages, most commonly SAS, Stata and SPSS. The package `haven` can read these files into R. The package follows standard syntax for reading data in R, here with a `.sav` file for SPSS:
+
+```{r}
+#| label: sav
+#| eval: false
+library(haven)
+cases <- read_sav("../data/pres_deb.sav")
+```
+
+For Stata files (`.dta`), the syntax is the same, but now with the function `read_dta()`:
+
+```{r}
+#| label: dta_files
+#| eval: false
+pres_deb <- read_dta("../data/pres_deb.dta")
+```
+
+Note that both Stata and SPSS files often come with value labels that can work as a coding book. See `?haven::labelled` for more details on this.
+
+## Raw textfiles (.txt)
+
+Raw textfiles is also a common format for working with text data. The format does not have any overhead, which makes the files relatively small in size and they are flexible to work with. A common way to structure `.txt` files is to have each file be a document with a file name that indicates which document we are looking at. For example, we can store the titles in our `pres_deb` dataset into text files with their `id` as file names (here only with the first 10 rows of the data):
+
+```{r}
+#| label: save_txt
+#| eval: true
+#| output: false
+lapply(1:10, function(x) writeLines(pres_deb$dialogue[x], 
+                                    paste0("../data/dialogue_txt/", 
+                                           pres_deb$tot[x], 
+                                           pres_deb$person[x], 
+                                           ".txt")))
+
+```
+
+We can now check if the files are stored as expected:
+
+```{r}
+#| label: list_files
+
+dialogue_files <- list.files("../data/dialogue_txt", 
+                             full.names = TRUE, 
+                             pattern = ".txt")
+dialogue_files
+
+```
+
+If we want to read these files back into R, we can use the `readLines()` function:
+
+```{r}
+#| label: read_lines
+
+dialogues <- lapply(dialogue_files, readLines)
+
+class(dialogues) # lapply always returns a list
+
+dialogues[[1]] # This is the first title
+
+```
+
+We can now put the texts into a data frame by using `unlist()` on the `dialogues` object:
+
+```{r}
+#| label: txt_dataframe
+
+dialogue_txt <- data.frame(id = dialogue_files, 
+                        text = unlist(dialogues))
+
+# Trying to (sort of) reengineer the original data
+dialogue_txt %>% 
+  mutate(person = str_extract(id, "[A-Z]+"),
+         tot = str_extract(id, "([0-9]+\\.*)+"),
+         text = str_sub(text, 1, 50)) %>% 
+  select(person, tot, text)
+```
+
+We can also work directly with the list by giving the elements within the list names:
+
+
+```{r}
+#| label: txt_list_names
+names(dialogues) <- str_extract(dialogue_files, "([0-9]+\\.*)+[A-Z]+")
+names(dialogues)
+
+```
+
+<!-- Deretter kan vi enkelt gjøre om tekstene til en vektor med `unlist()` og putte det inn i en `data.frame()` sammen med en `id` variabel, som vi henter fra navnene i lista: -->
+
+
+
+```{r}
+#| label: txt_dataframe2
+dialogue_txt <- data.frame(text = unlist(dialogues),
+                           id = names(dialogues))
+
+glimpse(dialogue_txt)
+```
+
+It will often be a good idea to work with the data, especially in cases of large and many texts, in list format before converting to a data frame. List objects use slightly less resources in terms of RAM, but are also a bit more flexible to work with through parallelization functions such as `mclapply()`.^[Windows users will not me able to use this function because it relies on the [forking method](https://www.r-bloggers.com/2019/06/parallel-r-socket-or-fork/)]. In our small example, the difference in object size is small, but still there:
+
+```{r}
+#| label: list_vs_df_objsize
+
+
+object.size(dialogue_txt) - object.size(dialogues)
+```
+
+## Textfiles with overhead
+
+A `.txt` file is as it is; there are no hidden attributes within the file. That is not necessarily the case with other text file formats. A MS-Word (`.docx`) file, for instance, is really just a compressed archive of `.html` and `.xml` files that give pointers to how this file should appear in programs that can read such files. Let's look at an example^[This is Martin Søyland's BA-thesis.]:
+
+```{r}
+#| label: msw_zip
+
+unzip("../data/ba_thesis.docx", exdir = "../data/wordfiles")
+
+list.files("../data/wordfiles/")
+
+```
+
+
+The consequence is that these files are a lot harder to read for R than `.txt` files, and we get weird outputs when we try to use `readLines()`:
+
+```{r}
+#| label: read_msw_feil
+#| warning: false
+readLines("../data/ba_thesis.docx", n = 2)
+```
+
+In other words, we need different methods for reading files with overhead. Below are some examples with `.docx` and `.pdf`, which are the most used types of files, but there are of course a plethora of other formats you might bump into at some point.
+
+### .docx
+
+Fortunately for us, R has a large community of package builders that usually have solved our problem for us. In this case, we use the `officer` package, which has read functions for MS-office files (word, excel, and powerpoint). We first have to read the document with the `read_docx` function, and then convert the resulting object to a data frame using the `docx_summary()` function.
+
+```{r}
+#| label: read_docx
+#| eval: true
+library(officer)
+
+ba_docx <- read_docx("../data/ba_thesis.docx")
+
+ba_docx <- docx_summary(ba_docx)
+
+ba_docx$text[45:48]
+
+```
+
+It is, of course, always useful to inspect the data thoroughly before continuing with our analyses. For instance, there could be mistakes in how the data was read because of encoding issues.
+
+### .pdf
+
+The same goes for `.pdf` files, although the package is now `pdftools` and the function is `pdf_text()`:
+
+```{r}
+#| label: read_pdf
+library(pdftools)
+
+ba_pdf <- pdf_text("../data/ba_thesis.pdf")
+
+ba_pdf <- ba_pdf[4] %>%
+  strsplit("\\n") %>%
+  unlist() %>% 
+  .[which(. != "")]
+
+ba_pdf[11:14]
+
+```
+
+An honorable mention to historical documents that have been scanned in `.pdf` format: these are often just pictures that needs to be ran through *Optical Character Recognition* (OCR) before we can utilize the text.

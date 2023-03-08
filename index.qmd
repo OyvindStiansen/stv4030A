@@ -1,0 +1,30 @@
+---
+title: "STV4030A: Digital Data in Political Science "
+---
+
+<!-- ```{r} -->
+<!-- #| label: manifest -->
+<!-- #| echo: false -->
+<!-- rsconnect::writeManifest("docs") -->
+<!-- ``` -->
+
+
+Welcome to the course website for STV4030A! [STV4030A - Digital Data in Political Science](https://www.uio.no/studier/emner/sv/statsvitenskap/STV4030A/).
+
+In previous courses, you have learned how to use R and RStudio to open datasets, recode variables, and fit statistical models. In this course, we will focus on all the other skills you need to do quantitative political science:
+
+Specifically, this website contains a set of resources on how to:
+
+-   collect data from various digital sources
+
+-   prepare the data for statistical analysis -
+
+-   visualize different types of data and results from statistical models - how to combine text and code in Quarto documents
+
+-   make the full research process from data collection to a final MA thesis efficient and reproducible.
+
+The materials on this website serve as the curriculum for [STV4030A - Digital Data in Political Science](https://www.uio.no/studier/emner/sv/statsvitenskap/STV4030A/), but may also useful for students working on their MA theses or any other project involving digital data.
+
+To practice these skills, you will during the course of [STV4030A - Digital Data in Political Science](https://www.uio.no/studier/emner/sv/statsvitenskap/STV4030A/) complete weekly challenges
+
+This course assumes previous familiarity with R from [STV4022](https://www.uio.no/studier/emner/sv/statsvitenskap/STV4022/), [PECOS4022](https://www.uio.no/studier/emner/sv/statsvitenskap/PECOS4022/) or a similar course, but we [include a brief review of the basics of R here.](basics_refresh/basic_R.qmd) Whereas those courses focused on estimating statistical models in R using datasets that were already prepared for analysis, we will now focus on all the other tools you will need to write a quantitative MA thesis in political science or peace and conflict studies from data collection to writing up your thesis in Quarto.
